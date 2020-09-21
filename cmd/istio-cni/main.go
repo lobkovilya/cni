@@ -19,9 +19,9 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"os"
-	"strconv"
 	"time"
 
 	"istio.io/api/annotation"
@@ -122,6 +122,8 @@ func parseConfig(stdin []byte) (*PluginConf, error) {
 
 // cmdAdd is called for ADD requests
 func cmdAdd(args *skel.CmdArgs) error {
+	ioutil.WriteFile("/tmp/cni-hello-from-add", []byte("hello from add cmd"), 0644)
+
 	conf, err := parseConfig(args.StdinData)
 	if err != nil {
 		log.Errorf("istio-cni cmdAdd parsing config %v", err)
@@ -207,19 +209,19 @@ func cmdAdd(args *skel.CmdArgs) error {
 					zap.String("pod", string(k8sArgs.K8S_POD_NAME)),
 					zap.String("Namespace", string(k8sArgs.K8S_POD_NAMESPACE)),
 					zap.Reflect("annotations", annotations))
-				if val, ok := annotations[injectAnnotationKey]; ok {
-					log.Infof("Pod %s contains inject annotation: %s", string(k8sArgs.K8S_POD_NAME), val)
-					if injectEnabled, err := strconv.ParseBool(val); err == nil {
-						if !injectEnabled {
-							log.Infof("Pod excluded due to inject-disabled annotation")
-							excludePod = true
-						}
-					}
-				}
-				if _, ok := annotations[sidecarStatusKey]; !ok {
-					log.Infof("Pod %s excluded due to not containing sidecar annotation", string(k8sArgs.K8S_POD_NAME))
-					excludePod = true
-				}
+				//if val, ok := annotations[injectAnnotationKey]; ok {
+				//	log.Infof("Pod %s contains inject annotation: %s", string(k8sArgs.K8S_POD_NAME), val)
+				//	if injectEnabled, err := strconv.ParseBool(val); err == nil {
+				//		if !injectEnabled {
+				//			log.Infof("Pod excluded due to inject-disabled annotation")
+				//			excludePod = true
+				//		}
+				//	}
+				//}
+				//if _, ok := annotations[sidecarStatusKey]; !ok {
+				//	log.Infof("Pod %s excluded due to not containing sidecar annotation", string(k8sArgs.K8S_POD_NAME))
+				//	excludePod = true
+				//}
 				if !excludePod {
 					log.Infof("setting up redirect")
 					if redirect, redirErr := NewRedirect(annotations); redirErr != nil {
@@ -280,7 +282,7 @@ func cmdDel(args *skel.CmdArgs) error {
 }
 
 func main() {
-	loggingOptions.OutputPaths = []string{"stderr"}
+	loggingOptions.OutputPaths = []string{"/tmp/istio-cni.log", "stderr"}
 	loggingOptions.JSONEncoding = true
 	if err := log.Configure(loggingOptions); err != nil {
 		os.Exit(1)

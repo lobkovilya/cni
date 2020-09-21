@@ -191,17 +191,17 @@ e2e:
 # gobuild script uses custom linker flag to set the variables.
 # Params: OUT VERSION_PKG SRC
 
-.PHONY: istio-cni
-istio-cni ${ISTIO_OUT}/istio-cni:
-	common/scripts/gobuild.sh ${ISTIO_OUT}/istio-cni ./cmd/istio-cni
+.PHONY: kuma-cni
+kuma-cni ${ISTIO_OUT}/kuma-cni:
+	common/scripts/gobuild.sh ${ISTIO_OUT}/kuma-cni ./cmd/istio-cni
 
 .PHONY: istio-cni-repair
 istio-cni-repair ${ISTIO_OUT}/istio-cni-repair:
 	common/scripts/gobuild.sh ${ISTIO_OUT}/istio-cni-repair ./cmd/istio-cni-repair
 
 # Non-static istio-cnis. These are typically a build artifact.
-${ISTIO_OUT}/istio-cni-linux: depend
-	STATIC=0 GOOS=linux   common/scripts/gobuild.sh $@ ./cmd/istio-cni
+${ISTIO_OUT}/kuma-cni-linux: depend
+	STATIC=0 GOOS=linux   common/scripts/gobuild.sh $@ ./cmd/kuma-cni
 
 # Below is pattern for building for more platforms
 #${ISTIO_OUT}/istio-cni-osx: depend
@@ -211,11 +211,11 @@ ${ISTIO_OUT}/istio-cni-linux: depend
 
 .PHONY: build
 # Build will rebuild the go binaries.
-build: depend istio-cni istio-cni-repair
+build: depend kuma-cni istio-cni-repair
 
 # istio-cni-all makes all of the non-static istio-cni executables for each supported OS
 .PHONY: istio-cni-all
-istio-cni-all: ${ISTIO_OUT}/istio-cni-linux
+istio-cni-all: ${ISTIO_OUT}/kuma-cni-linux
 
 # istio-cni-install builds then installs istio-cni into $GOPATH/BIN
 # Used for debugging istio-cni during dev work

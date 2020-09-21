@@ -28,9 +28,9 @@ import (
 const (
 	redirectModeREDIRECT         = "REDIRECT"
 	redirectModeTPROXY           = "TPROXY"
-	defaultProxyStatusPort       = "15020"
+	defaultProxyStatusPort       = "9901"
 	defaultRedirectToPort        = "15001"
-	defaultNoRedirectUID         = "1337"
+	defaultNoRedirectUID         = "5678"
 	defaultRedirectMode          = redirectModeREDIRECT
 	defaultRedirectIPCidr        = "*"
 	defaultRedirectExcludeIPCidr = ""

@@ -1,0 +1,7 @@
+{
+    "name": "kuma-cni",
+    "type": "kuma-cni",
+    "log_level": "debug",
+    "policy": {},
+    "kubernetes": {}
+}

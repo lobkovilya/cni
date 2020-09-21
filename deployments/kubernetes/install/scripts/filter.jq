@@ -8,6 +8,6 @@ if has("type") then
    | .name = "k8s-pod-network"
    | .cniVersion = "0.3.0"
 else
-  del(.plugins[]? | select(.type == "istio-cni"))
+  del(.plugins[]? | select(.type == "kuma-cni"))
   | .plugins += [$CNI_TMP_CONF_DATA]
 end

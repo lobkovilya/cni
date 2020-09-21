@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Copyright 2019 Istio Authors
+# Copyright 2019 kuma Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Script to install Istio CNI on a Kubernetes host.
+# Script to install kuma CNI on a Kubernetes host.
 # - Expects the host CNI binary path to be mounted at /host/opt/cni/bin.
 # - Expects the host CNI network config path to be mounted at /host/etc/cni/net.d.
 # - Expects the desired CNI config in the CNI_NETWORK_CONFIG env variable.
@@ -36,7 +36,7 @@ exit_graceful(){
 
 function rm_bin_files() {
   echo "Removing existing binaries"
-  rm -f /host/opt/cni/bin/istio-cni /host/opt/cni/bin/istio-iptables.sh
+  rm -f /host/opt/cni/bin/kuma-cni /host/opt/cni/bin/istio-iptables.sh
 }
 # find_cni_conf_file
 #   Finds the CNI config file in the mounted CNI config dir.
@@ -81,15 +81,15 @@ function check_install() {
   fi
   if [ -e "${MOUNTED_CNI_NET_DIR}/${CNI_CONF_NAME}" ]; then
     if [ "${CHAINED_CNI_PLUGIN}" == "true" ]; then
-      istiocni_conf=$(jq '.plugins[]? | select(.type == "istio-cni")' < "${MOUNTED_CNI_NET_DIR}/${CNI_CONF_NAME}")
-      if [ -z "${istiocni_conf}" ]; then
-        echo "ERROR: istio-cni CNI config removed from file: \"${MOUNTED_CNI_NET_DIR}/${CNI_CONF_NAME}\""
+      kumacni_conf=$(jq '.plugins[]? | select(.type == "kuma-cni")' < "${MOUNTED_CNI_NET_DIR}/${CNI_CONF_NAME}")
+      if [ -z "${kumacni_conf}" ]; then
+        echo "ERROR: kuma-cni CNI config removed from file: \"${MOUNTED_CNI_NET_DIR}/${CNI_CONF_NAME}\""
         exit 1
       fi
     else
-      istiocni_conf=$(jq -r '.type' < "${MOUNTED_CNI_NET_DIR}/${CNI_CONF_NAME}")
-      if [ "${istiocni_conf}" != "istio-cni" ]; then
-        echo "ERROR: istio-cni CNI config file modified: \"${MOUNTED_CNI_NET_DIR}/${CNI_CONF_NAME}\""
+      kumacni_conf=$(jq -r '.type' < "${MOUNTED_CNI_NET_DIR}/${CNI_CONF_NAME}")
+      if [ "${kumacni_conf}" != "kuma-cni" ]; then
+        echo "ERROR: kuma-cni CNI config file modified: \"${MOUNTED_CNI_NET_DIR}/${CNI_CONF_NAME}\""
         exit 1
       fi
     fi
@@ -104,18 +104,18 @@ function cleanup() {
 
   if [ -e "${MOUNTED_CNI_NET_DIR}/${CNI_CONF_NAME}" ]; then
     if [ "${CHAINED_CNI_PLUGIN}" == "true" ]; then
-      echo "Removing istio-cni config from CNI chain config in ${MOUNTED_CNI_NET_DIR}/${CNI_CONF_NAME}"
-      CNI_CONF_DATA=$(jq 'del( .plugins[]? | select(.type == "istio-cni"))' < "${MOUNTED_CNI_NET_DIR}/${CNI_CONF_NAME}")
+      echo "Removing kuma-cni config from CNI chain config in ${MOUNTED_CNI_NET_DIR}/${CNI_CONF_NAME}"
+      CNI_CONF_DATA=$(jq 'del( .plugins[]? | select(.type == "kuma-cni"))' < "${MOUNTED_CNI_NET_DIR}/${CNI_CONF_NAME}")
       # Rewrite the config file atomically: write into a temp file in the same directory then rename.
       echo "${CNI_CONF_DATA}" > "${MOUNTED_CNI_NET_DIR}/${CNI_CONF_NAME}.tmp"
       mv "${MOUNTED_CNI_NET_DIR}/${CNI_CONF_NAME}.tmp" "${MOUNTED_CNI_NET_DIR}/${CNI_CONF_NAME}"
     else
-      echo "Removing istio-cni net.d conf file: ${MOUNTED_CNI_NET_DIR}/${CNI_CONF_NAME}"
+      echo "Removing kuma-cni net.d conf file: ${MOUNTED_CNI_NET_DIR}/${CNI_CONF_NAME}"
       rm "${MOUNTED_CNI_NET_DIR}/${CNI_CONF_NAME}"
     fi
   fi
   if [ -e "${MOUNTED_CNI_NET_DIR}/${KUBECFG_FILE_NAME}" ]; then
-    echo "Removing istio-cni kubeconfig file: ${MOUNTED_CNI_NET_DIR}/${KUBECFG_FILE_NAME}"
+    echo "Removing kuma-cni kubeconfig file: ${MOUNTED_CNI_NET_DIR}/${KUBECFG_FILE_NAME}"
     rm "${MOUNTED_CNI_NET_DIR}/${KUBECFG_FILE_NAME}"
   fi
   rm_bin_files
@@ -134,11 +134,11 @@ CNI_CONF_NAME_OVERRIDE=${CNI_CONF_NAME:-}
 # default to first file in `ls` output
 # if dir is empty, default to a filename that is not likely to be lexicographically first in the dir
 CNI_CONF_NAME=${CNI_CONF_NAME:-$(find_cni_conf_file)}
-CNI_CONF_NAME=${CNI_CONF_NAME:-YYY-istio-cni.conflist}
-KUBECFG_FILE_NAME=${KUBECFG_FILE_NAME:-ZZZ-istio-cni-kubeconfig}
+CNI_CONF_NAME=${CNI_CONF_NAME:-YYY-kuma-cni.conflist}
+KUBECFG_FILE_NAME=${KUBECFG_FILE_NAME:-ZZZ-kuma-cni-kubeconfig}
 CFGCHECK_INTERVAL=${CFGCHECK_INTERVAL:-1}
 
-# Whether the Istio CNI plugin should be installed as a chained plugin (defaults to true) or as a standalone plugin (when false)
+# Whether the kuma CNI plugin should be installed as a chained plugin (defaults to true) or as a standalone plugin (when false)
 CHAINED_CNI_PLUGIN=${CHAINED_CNI_PLUGIN:-true}
 
 trap exit_graceful SIGINT
@@ -177,11 +177,11 @@ do
     cp "${path}" "${dir}/${filename}.tmp" && mv "${dir}/${filename}.tmp" "${dir}/${filename}" || exit_with_error "Failed to copy $path into $dir. This may be caused by selinux configuration on the host."
   done
 
-  echo "Wrote Istio CNI binaries to $dir."
+  echo "Wrote kuma CNI binaries to $dir."
 done
 
 # Create a temp file in the same directory as the target, in order for the final rename to be atomic.
-TMP_CONF="${MOUNTED_CNI_NET_DIR}/istio-cni.conf.tmp"
+TMP_CONF="${MOUNTED_CNI_NET_DIR}/kuma-cni.conf.tmp"
 true > "${TMP_CONF}"
 # If specified, overwrite the network configuration file.
 : "${CNI_NETWORK_CONFIG_FILE:=}"
@@ -227,7 +227,7 @@ if [ -f "$SERVICE_ACCOUNT_PATH/token" ]; then
   touch "${MOUNTED_CNI_NET_DIR}/${KUBECFG_FILE_NAME}.tmp"
   chmod "${KUBECONFIG_MODE:-600}" "${MOUNTED_CNI_NET_DIR}/${KUBECFG_FILE_NAME}.tmp"
   cat > "${MOUNTED_CNI_NET_DIR}/${KUBECFG_FILE_NAME}.tmp" <<EOF
-# Kubeconfig file for Istio CNI plugin.
+# Kubeconfig file for kuma CNI plugin.
 apiVersion: v1
 kind: Config
 clusters:
@@ -236,15 +236,15 @@ clusters:
     server: ${KUBERNETES_SERVICE_PROTOCOL:-https}://[${KUBERNETES_SERVICE_HOST}]:${KUBERNETES_SERVICE_PORT}
     $TLS_CFG
 users:
-- name: istio-cni
+- name: kuma-cni
   user:
     token: "${SERVICEACCOUNT_TOKEN}"
 contexts:
-- name: istio-cni-context
+- name: kuma-cni-context
   context:
     cluster: local
-    user: istio-cni
-current-context: istio-cni-context
+    user: kuma-cni
+current-context: kuma-cni-context
 EOF
   mv "${MOUNTED_CNI_NET_DIR}/${KUBECFG_FILE_NAME}.tmp" "${MOUNTED_CNI_NET_DIR}/${KUBECFG_FILE_NAME}"
 
@@ -276,7 +276,7 @@ if [ "${CHAINED_CNI_PLUGIN}" == "true" ]; then
   fi
 
   if [ -e "${MOUNTED_CNI_NET_DIR}/${CNI_CONF_NAME}" ]; then
-      # This section overwrites an existing plugins list entry to for istio-cni
+      # This section overwrites an existing plugins list entry to for kuma-cni
       CNI_TMP_CONF_DATA=$(cat "${TMP_CONF}")
       CNI_CONF_DATA=$(jq --argjson CNI_TMP_CONF_DATA "$CNI_TMP_CONF_DATA" -f /filter.jq < "${MOUNTED_CNI_NET_DIR}/${CNI_CONF_NAME}")
       echo "${CNI_CONF_DATA}" > "${TMP_CONF}"
@@ -303,7 +303,7 @@ echo "Created CNI config ${CNI_CONF_NAME}"
 # Unless told otherwise, sleep forever.
 # This prevents Kubernetes from restarting the pod repeatedly.
 should_sleep=${SLEEP:-"true"}
-echo "Done configuring CNI.  Sleep=$should_sleep"
+echo "Done configuringHU CNI.  Sleep=$should_sleep"
 while [ "$should_sleep" = "true" ]; do
   sleep "$CFGCHECK_INTERVAL"
   check_install

@@ -45,6 +45,7 @@ func (ipt *iptables) Program(netns string, rdrct *Redirect) error {
 		netnsArg,
 		nsSetupExecutable,
 		"-p", rdrct.targetPort,
+		"-z", rdrct.targetPort,
 		"-u", rdrct.noRedirectUID,
 		"-m", rdrct.redirectMode,
 		"-i", rdrct.includeIPCidrs,

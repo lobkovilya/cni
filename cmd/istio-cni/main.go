@@ -193,9 +193,9 @@ func cmdAdd(args *skel.CmdArgs) error {
 				return k8sErr
 			}
 
-			// Check if istio-init container is present; in that case exclude pod
-			if _, present := initContainersMap[ISTIOINIT]; present {
-				log.Info("Pod excluded due to being already injected with istio-init container",
+			// Check if kuma-init container is present; in that case exclude pod
+			if _, present := initContainersMap["kuma-init"]; present {
+				log.Info("Pod excluded due to being already injected with kuma-init container",
 					zap.String("pod", string(k8sArgs.K8S_POD_NAME)),
 					zap.String("namespace", string(k8sArgs.K8S_POD_NAMESPACE)))
 				excludePod = true
@@ -209,19 +209,11 @@ func cmdAdd(args *skel.CmdArgs) error {
 					zap.String("pod", string(k8sArgs.K8S_POD_NAME)),
 					zap.String("Namespace", string(k8sArgs.K8S_POD_NAMESPACE)),
 					zap.Reflect("annotations", annotations))
-				//if val, ok := annotations[injectAnnotationKey]; ok {
-				//	log.Infof("Pod %s contains inject annotation: %s", string(k8sArgs.K8S_POD_NAME), val)
-				//	if injectEnabled, err := strconv.ParseBool(val); err == nil {
-				//		if !injectEnabled {
-				//			log.Infof("Pod excluded due to inject-disabled annotation")
-				//			excludePod = true
-				//		}
-				//	}
-				//}
-				//if _, ok := annotations[sidecarStatusKey]; !ok {
-				//	log.Infof("Pod %s excluded due to not containing sidecar annotation", string(k8sArgs.K8S_POD_NAME))
-				//	excludePod = true
-				//}
+				val, ok := annotations["kuma.io/sidecar-injected"]
+				if !ok || val != "true" {
+					log.Infof("Pod excluded due to lack of 'kuma.io/sidecar-injected: true' annotation")
+					excludePod = true
+				}
 				if !excludePod {
 					log.Infof("setting up redirect")
 					if redirect, redirErr := NewRedirect(annotations); redirErr != nil {

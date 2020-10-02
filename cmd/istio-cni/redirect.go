@@ -42,8 +42,6 @@ var (
 	includeIPCidrsKey       = annotation.SidecarTrafficIncludeOutboundIPRanges.Name
 	excludeIPCidrsKey       = annotation.SidecarTrafficExcludeOutboundIPRanges.Name
 	includePortsKey         = annotation.SidecarTrafficIncludeInboundPorts.Name
-	excludeInboundPortsKey  = annotation.SidecarTrafficExcludeInboundPorts.Name
-	excludeOutboundPortsKey = annotation.SidecarTrafficExcludeOutboundPorts.Name
 
 	sidecarInterceptModeKey = annotation.SidecarInterceptionMode.Name
 	sidecarPortListKey      = annotation.SidecarStatusPort.Name
@@ -58,8 +56,8 @@ var (
 		"includeIPCidrs":       {includeIPCidrsKey, defaultRedirectIPCidr, validateCIDRListWithWildcard},
 		"excludeIPCidrs":       {excludeIPCidrsKey, defaultRedirectExcludeIPCidr, validateCIDRList},
 		"includePorts":         {includePortsKey, "", validatePortListWithWildcard},
-		"excludeInboundPorts":  {excludeInboundPortsKey, defaultRedirectExcludePort, validatePortList},
-		"excludeOutboundPorts": {excludeOutboundPortsKey, defaultRedirectExcludePort, validatePortList},
+		"excludeInboundPorts":  {"traffic.kuma.io/exclude-inbound-ports", defaultRedirectExcludePort, validatePortList},
+		"excludeOutboundPorts": {"traffic.kuma.io/exclude-outbound-ports", defaultRedirectExcludePort, validatePortList},
 		"kubevirtInterfaces":   {kubevirtInterfacesKey, defaultKubevirtInterfaces, alwaysValidFunc},
 	}
 )
